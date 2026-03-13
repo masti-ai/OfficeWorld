@@ -1,0 +1,18 @@
+node_modules/
+dist/
+.vite/
+*.local
+.env
+.beads/
+
+# Gas Town (added by gt)
+.runtime/
+.claude/commands/
+.logs/
+
+# Gas Town (added by gt)
+.claude/
+__pycache__/
+
+# Gas Town (added by gt)
+state.json

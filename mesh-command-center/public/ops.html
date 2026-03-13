@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gas Town Ops — Mesh Feed</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      background: #0a0e14;
+      color: #bfbdb6;
+      min-height: 100vh;
+    }
+    .header {
+      background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+      border-bottom: 1px solid #21262d;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header h1 { font-size: 1.1rem; color: #e6b450; font-weight: 700; letter-spacing: 1px; }
+    .header h1 span { color: #39bae6; }
+    .header-right { display: flex; align-items: center; gap: 16px; font-size: 0.75rem; color: #565b66; }
+    .header-right a { color: #39bae6; text-decoration: none; }
+    .header-right a:hover { text-decoration: underline; }
+    .pulse { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #7fd962; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    .main {
+      display: grid;
+      grid-template-columns: 280px 1fr 320px;
+      gap: 0;
+      height: calc(100vh - 50px);
+    }
+
+    /* Sidebar */
+    .sidebar { background: #0d1117; border-right: 1px solid #21262d; overflow-y: auto; }
+    .sidebar-section { padding: 12px; border-bottom: 1px solid #21262d; }
+    .sidebar-section h3 {
+      font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px;
+      color: #565b66; margin-bottom: 8px;
+    }
+
+    /* Node cards */
+    .node {
+      background: #161b22; border: 1px solid #21262d; border-radius: 6px;
+      padding: 8px 10px; margin-bottom: 6px;
+    }
+    .node:hover { border-color: #39bae6; }
+    .node-header { display: flex; justify-content: space-between; align-items: center; }
+    .node-name { font-size: 0.8rem; color: #e6e1cf; font-weight: 600; }
+    .node-role { font-size: 0.65rem; color: #565b66; margin-top: 2px; }
+    .node-seen { font-size: 0.6rem; color: #565b66; margin-top: 2px; }
+    .badge {
+      font-size: 0.6rem; padding: 2px 6px; border-radius: 10px;
+      font-weight: 700; text-transform: uppercase;
+    }
+    .badge-active { background: #1a4d2e; color: #7fd962; }
+    .badge-idle { background: #3d3520; color: #e6b450; }
+    .badge-done { background: #21262d; color: #565b66; }
+    .badge-down { background: #4d1a1a; color: #f07178; }
+
+    /* Polecat list */
+    .polecat { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 0.75rem; }
+    .polecat-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .polecat-dot.active { background: #7fd962; }
+    .polecat-dot.idle { background: #e6b450; }
+    .polecat-dot.done { background: #565b66; }
+    .polecat-name { color: #bfbdb6; }
+    .polecat-status { color: #565b66; margin-left: auto; font-size: 0.65rem; }
+
+    /* Container/rig items */
+    .list-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 5px 0; font-size: 0.75rem;
+    }
+    .list-name { color: #e6e1cf; }
+    .list-status { font-size: 0.68rem; }
+    .list-status.up { color: #7fd962; }
+    .list-status.bad { color: #f07178; }
+
+    /* Worker items */
+    .worker-item {
+      background: #161b22; border: 1px solid #21262d; border-radius: 6px;
+      padding: 8px 10px; margin-bottom: 6px;
+    }
+    .worker-name { font-size: 0.78rem; color: #e6e1cf; font-weight: 600; }
+    .worker-output {
+      font-size: 0.65rem; color: #565b66; background: #0a0e14;
+      padding: 4px 6px; border-radius: 3px; margin-top: 4px;
+      white-space: pre-wrap; max-height: 50px; overflow: hidden;
+    }
+
+    /* Center content */
+    .center { overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+    .card {
+      background: #0d1117; border: 1px solid #21262d; border-radius: 8px; overflow: hidden;
+    }
+    .card-header {
+      padding: 10px 14px; border-bottom: 1px solid #21262d;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .card-header h3 { font-size: 0.8rem; color: #e6b450; font-weight: 600; }
+    .card-header .count {
+      font-size: 0.7rem; color: #565b66; background: #161b22;
+      padding: 2px 8px; border-radius: 10px;
+    }
+    .card-body { padding: 10px 14px; }
+
+    /* PR table */
+    .pr-table { width: 100%; border-collapse: collapse; }
+    .pr-table th {
+      text-align: left; font-size: 0.65rem; color: #565b66;
+      text-transform: uppercase; letter-spacing: 1px; padding: 6px 8px;
+      border-bottom: 1px solid #21262d;
+    }
+    .pr-table td { padding: 8px; font-size: 0.78rem; border-bottom: 1px solid #161b22; }
+    .pr-table tr:hover { background: #161b22; }
+    .pr-repo { color: #39bae6; font-weight: 600; }
+    .pr-title { color: #e6e1cf; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pr-author { color: #d2a6ff; }
+    .pr-branch { color: #565b66; font-size: 0.7rem; }
+
+    /* Beads */
+    .beads-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 8px; }
+    .bead-item {
+      background: #161b22; border: 1px solid #21262d; border-radius: 6px;
+      padding: 10px; border-left: 3px solid #565b66;
+    }
+    .bead-item.p0 { border-left-color: #f07178; }
+    .bead-item.p1 { border-left-color: #e6b450; }
+    .bead-item.p2 { border-left-color: #39bae6; }
+    .bead-title { font-size: 0.78rem; color: #e6e1cf; margin-bottom: 4px; }
+    .bead-meta { font-size: 0.65rem; color: #565b66; display: flex; gap: 8px; }
+
+    /* Right sidebar — mesh feed */
+    .feed { background: #0d1117; border-left: 1px solid #21262d; overflow-y: auto; }
+    .feed-header {
+      padding: 12px; border-bottom: 1px solid #21262d; position: sticky;
+      top: 0; background: #0d1117; z-index: 10;
+    }
+    .feed-header h3 { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; color: #565b66; }
+    .feed-item { padding: 10px 12px; border-bottom: 1px solid #161b22; }
+    .feed-item:hover { background: #161b22; }
+    .feed-from { font-size: 0.7rem; font-weight: 600; }
+    .feed-from.gt-local { color: #39bae6; }
+    .feed-from.gasclaw-1 { color: #d2a6ff; }
+    .feed-from.gasclaw-2, .feed-from.deepwork-eng-2 { color: #7fd962; }
+    .feed-subject { font-size: 0.75rem; color: #e6e1cf; margin-top: 2px; }
+    .feed-body { font-size: 0.68rem; color: #565b66; margin-top: 4px; max-height: 60px; overflow: hidden; }
+    .feed-time { font-size: 0.6rem; color: #565b66; margin-top: 4px; }
+
+    .loading { color: #565b66; padding: 12px; font-size: 0.75rem; }
+    .empty { color: #565b66; padding: 12px; font-size: 0.75rem; font-style: italic; }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #21262d; border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>GAS TOWN</span> Ops View</h1>
+    <div class="header-right">
+      <a href="/">Dashboard</a>
+      <span class="pulse"></span>
+      <span id="lastRefresh">--</span>
+      <span>auto-refresh 10s</span>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- Left: Nodes, Polecats, Rigs, Containers, Workers -->
+    <div class="sidebar">
+      <div class="sidebar-section">
+        <h3>Mesh Nodes</h3>
+        <div id="nodes"><div class="loading">Loading...</div></div>
+      </div>
+      <div class="sidebar-section">
+        <h3>Polecats</h3>
+        <div id="polecats"><div class="loading">Loading...</div></div>
+      </div>
+      <div class="sidebar-section">
+        <h3>Rigs</h3>
+        <div id="rigs"><div class="loading">Loading...</div></div>
+      </div>
+      <div class="sidebar-section">
+        <h3>Containers</h3>
+        <div id="containers"><div class="loading">Loading...</div></div>
+      </div>
+      <div class="sidebar-section">
+        <h3>Workers</h3>
+        <div id="workers"><div class="loading">Loading...</div></div>
+      </div>
+    </div>
+
+    <!-- Center: PRs, Beads -->
+    <div class="center">
+      <div class="card">
+        <div class="card-header">
+          <h3>Open Pull Requests</h3>
+          <span class="count" id="prCount">--</span>
+        </div>
+        <div class="card-body">
+          <table class="pr-table">
+            <thead><tr><th>Repo</th><th>PR</th><th>Author</th><th>Branch</th></tr></thead>
+            <tbody id="prTable"><tr><td colspan="4" class="loading">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h3>Open Beads</h3>
+          <span class="count" id="beadCount">--</span>
+        </div>
+        <div class="card-body">
+          <div class="beads-grid" id="beads"><div class="loading">Loading...</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Mesh Feed -->
+    <div class="feed">
+      <div class="feed-header"><h3>Mesh Feed</h3></div>
+      <div id="meshFeed"><div class="loading">Loading...</div></div>
+    </div>
+  </div>
+
+  <script>
+    function esc(s) {
+      if (s == null) return '';
+      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+    function timeAgo(ts) {
+      if (!ts) return '';
+      const d = new Date(ts + (ts.includes('Z') ? '' : 'Z'));
+      const sec = Math.floor((Date.now() - d) / 1000);
+      if (sec < 60) return sec + 's ago';
+      if (sec < 3600) return Math.floor(sec/60) + 'm ago';
+      if (sec < 86400) return Math.floor(sec/3600) + 'h ago';
+      return Math.floor(sec/86400) + 'd ago';
+    }
+    async function api(url) {
+      try { const r = await fetch(url); return await r.json(); }
+      catch(e) { console.error(url, e); return null; }
+    }
+
+    async function renderNodes() {
+      const data = await api('/api/peers');
+      const el = document.getElementById('nodes');
+      if (!data?.peers?.length) { el.innerHTML = '<div class="empty">No nodes</div>'; return; }
+      el.innerHTML = data.peers.map(n => `
+        <div class="node">
+          <div class="node-header">
+            <div>
+              <div class="node-name">${esc(n.name || n.gt_id)}</div>
+              <div class="node-role">${esc(n.role)}${n.container ? ' / ' + esc(n.container) : ''}</div>
+            </div>
+            <span class="badge badge-${n.status === 'active' ? 'active' : 'down'}">${esc(n.status)}</span>
+          </div>
+          <div class="node-seen">${n.last_seen ? timeAgo(n.last_seen) : ''}</div>
+        </div>
+      `).join('');
+    }
+
+    async function renderPolecats() {
+      const data = await api('/api/polecats');
+      const el = document.getElementById('polecats');
+      if (!data?.polecats?.length) { el.innerHTML = '<div class="empty">No polecats</div>'; return; }
+      el.innerHTML = data.polecats.map(p => {
+        const st = p.status || (p.active ? 'active' : 'done');
+        const dot = st === 'idle' ? 'idle' : st === 'done' ? 'done' : 'active';
+        return `<div class="polecat">
+          <span class="polecat-dot ${dot}"></span>
+          <span class="polecat-name">${esc(p.name)}</span>
+          <span class="polecat-status">${esc(st)}</span>
+        </div>`;
+      }).join('');
+    }
+
+    async function renderRigs() {
+      const data = await api('/api/rigs');
+      const el = document.getElementById('rigs');
+      if (!data?.rigs?.length) { el.innerHTML = '<div class="empty">No rigs</div>'; return; }
+      el.innerHTML = data.rigs.map(r => `
+        <div class="list-item">
+          <span class="list-name">${esc(r.name)}</span>
+          <span class="badge badge-${r.status === 'active' ? 'active' : r.status === 'docked' ? 'done' : 'idle'}">${esc(r.status)}</span>
+        </div>
+      `).join('');
+    }
+
+    async function renderContainers() {
+      const data = await api('/api/containers');
+      const el = document.getElementById('containers');
+      if (!data?.containers?.length) { el.innerHTML = '<div class="empty">No containers</div>'; return; }
+      el.innerHTML = data.containers.map(c => {
+        const up = c.status?.startsWith('Up');
+        return `<div class="list-item">
+          <span class="list-name">${esc(c.name)}</span>
+          <span class="list-status ${up ? 'up' : 'bad'}">${esc(c.status)}</span>
+        </div>`;
+      }).join('');
+    }
+
+    async function renderWorkers() {
+      const [local, docker] = await Promise.all([api('/api/workers'), api('/api/docker-workers')]);
+      const el = document.getElementById('workers');
+      const all = [...(local?.workers || []), ...(docker?.workers || [])];
+      if (!all.length) { el.innerHTML = '<div class="empty">No active sessions</div>'; return; }
+      el.innerHTML = all.map(w => `
+        <div class="worker-item">
+          <div class="worker-name">${esc(w.name)} <span class="badge badge-${w.type === 'docker' ? 'idle' : 'active'}">${esc(w.host)}</span></div>
+          ${w.lastActivity ? `<div class="worker-output">${esc(w.lastActivity)}</div>` : ''}
+        </div>
+      `).join('');
+    }
+
+    async function renderPRs() {
+      const data = await api('/api/all-prs');
+      const el = document.getElementById('prTable');
+      const cnt = document.getElementById('prCount');
+      if (!data?.prs?.length) { el.innerHTML = '<tr><td colspan="4" class="empty">No open PRs</td></tr>'; cnt.textContent = '0'; return; }
+      cnt.textContent = data.prs.length;
+      el.innerHTML = data.prs.map(pr => `
+        <tr>
+          <td class="pr-repo">${esc(pr.repoShort)}</td>
+          <td class="pr-title" title="${esc(pr.title)}">#${pr.number} ${esc(pr.title)}</td>
+          <td class="pr-author">${esc(pr.author)}</td>
+          <td class="pr-branch">${esc(pr.branch)} &rarr; ${esc(pr.target)}</td>
+        </tr>
+      `).join('');
+    }
+
+    async function renderBeads() {
+      const data = await api('/api/bd-beads');
+      const el = document.getElementById('beads');
+      const cnt = document.getElementById('beadCount');
+      if (!data?.beads?.length) { el.innerHTML = '<div class="empty">No open beads</div>'; cnt.textContent = '0'; return; }
+      cnt.textContent = data.beads.length;
+      el.innerHTML = data.beads.map(b => `
+        <div class="bead-item p${b.priority ?? 2}">
+          <div class="bead-title">${esc(b.title || b.id)}</div>
+          <div class="bead-meta">
+            <span>${esc(b.id)}</span>
+            <span>${esc(b.issue_type || '')}</span>
+            <span>P${b.priority ?? '?'}</span>
+            ${b.assignee ? `<span>${esc(b.assignee)}</span>` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function renderMeshFeed() {
+      const data = await api('/api/mesh-updates');
+      const el = document.getElementById('meshFeed');
+      if (!data?.messages?.length) { el.innerHTML = '<div class="empty" style="padding:12px;">No messages</div>'; return; }
+      el.innerHTML = data.messages.map(m => {
+        const cls = (m.from_gt || '').replace(/[^a-z0-9-]/g, '');
+        return `<div class="feed-item">
+          <div class="feed-from ${cls}">${esc(m.from_gt)}</div>
+          <div class="feed-subject">${esc(m.subject)}</div>
+          ${m.body ? `<div class="feed-body">${esc(m.body).substring(0, 200)}</div>` : ''}
+          <div class="feed-time">${timeAgo(m.created_at)} ${m.read_at ? '' : '<span style="color:#e6b450;">unread</span>'}</div>
+        </div>`;
+      }).join('');
+    }
+
+    async function refreshAll() {
+      await Promise.allSettled([
+        renderNodes(), renderPolecats(), renderRigs(), renderContainers(),
+        renderWorkers(), renderPRs(), renderBeads(), renderMeshFeed()
+      ]);
+      document.getElementById('lastRefresh').textContent = new Date().toLocaleTimeString();
+    }
+
+    refreshAll();
+    setInterval(refreshAll, 10000);
+  </script>
+</body>
+</html>

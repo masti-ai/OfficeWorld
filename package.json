@@ -1,0 +1,36 @@
+{
+  "name": "gt-arcade",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Gas Town Arcade — Gather Town-style gamified pixel art dashboard for Gas Town",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 3200",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "server": "tsx server/index.ts",
+    "mesh-relay": "tsx server/mesh-relay.ts",
+    "tunnel": "cloudflared tunnel --url http://localhost:3200"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.6.2",
+    "express": "^4.18.2",
+    "phaser": "^3.80.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "ws": "^8.16.0",
+    "xterm": "^5.3.0",
+    "xterm-addon-fit": "^0.8.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/express": "^4.17.21",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@types/ws": "^8.5.10",
+    "@vitejs/plugin-react": "^4.3.1",
+    "tsx": "^4.7.1",
+    "typescript": "^5.5.3",
+    "vite": "^5.4.2"
+  }
+}
