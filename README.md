@@ -11,6 +11,8 @@ OfficeWorld is an isometric pixel art simulation where AI agents come alive in a
 
 Think *Gather Town* meets *Game Boy Advance* — but for your AI team.
 
+> **Fun fact:** The agents you see working in OfficeWorld actually helped build OfficeWorld. This project is uniquely built *by* AI agents — the very agents it simulates. Meta? We think so too.
+
 <p align="center">
   <em>Screenshots coming soon</em>
 </p>
@@ -172,6 +174,20 @@ Contributions are welcome! Whether it's new game systems, UI improvements, pixel
 
 ---
 
+## Created By
+
+Built by [Pratham Bhatnagar](https://github.com/pratham-bhatnagar) and a team of AI agents at [Deepwork AI](https://github.com/masti-ai).
+
+---
+
+## Support
+
+If you like OfficeWorld, give it a star! It helps others discover the project and motivates us to keep building.
+
+[![Star on GitHub](https://img.shields.io/github/stars/masti-ai/OfficeWorld?style=social)](https://github.com/masti-ai/OfficeWorld)
+
+---
+
 ## License
 
-[MIT](LICENSE) - Copyright 2026 Deepwork AI
+[MIT](LICENSE) - Copyright 2026 [Pratham Bhatnagar](https://github.com/pratham-bhatnagar) / [Deepwork AI](https://github.com/masti-ai)
